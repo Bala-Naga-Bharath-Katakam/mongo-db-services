@@ -26,35 +26,35 @@ This guide covers MongoDB commands, starting from basic operations to advanced t
 ```bash
 show dbs
 ```
-Use Database
+### Use Database
 ```bash
 use <database_name>
 ```
-Show Collections
+### Show Collections
 ```bash
 show collections
 ```
-Create a Collection
+### Create a Collection
 ```bash
 db.createCollection('<collection_name>')
 ```
-CRUD Operations
-Insert Document
+### CRUD Operations
+### Insert Document
 ```bash
 db.<collection_name>.insert({
   key1: "value1",
   key2: "value2"
 })
 ```
-Find Document
+### Find Document
 ```bash
 db.<collection_name>.find({ key1: "value1" })
 ```
-Find One Document
+### Find One Document
 ```bash
 db.<collection_name>.findOne({ key1: "value1" })
 ```
-Update Document
+### Update Document
 ```bash
 db.<collection_name>.update(
   { key1: "value1" },
