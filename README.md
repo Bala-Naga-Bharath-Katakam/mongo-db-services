@@ -38,7 +38,7 @@ show collections
 ```bash
 db.createCollection('<collection_name>')
 ```
-### CRUD Operations
+## CRUD Operations
 ### Insert Document
 ```bash
 db.<collection_name>.insert({
