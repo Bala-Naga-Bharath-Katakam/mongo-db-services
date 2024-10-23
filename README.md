@@ -65,3 +65,43 @@ db.<collection_name>.update(
 ```bash
 db.<collection_name>.remove({ key1: "value1" })
 ```
+## Indexing
+### Create an Index
+```bash
+db.<collection_name>.createIndex({ key1: 1 })  # 1 for ascending, -1 for descending
+```
+### List Indexes
+```bash
+db.<collection_name>.getIndexes()
+```
+### Drop Index
+```bash
+db.<collection_name>.dropIndex({ key1: 1 })
+```
+## Aggregation Framework
+### Basic Aggregation Example
+```bash
+db.<collection_name>.aggregate([
+  { $match: { key1: "value1" } },
+  { $group: { _id: "$key2", total: { $sum: 1 } } }
+])
+```
+### Project Fields
+```bash
+db.<collection_name>.aggregate([
+  { $project: { key1: 1, key2: 1 } }
+])
+```
+### Sort Documents
+```bash
+db.<collection_name>.aggregate([
+  { $sort: { key1: -1 } }  # -1 for descending, 1 for ascending
+])
+```
+### Limit Results
+```bash
+db.<collection_name>.aggregate([
+  { $limit: 5 }
+])
+```
+### Lookup (Join) Another Collection
