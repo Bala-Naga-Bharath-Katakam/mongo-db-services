@@ -61,3 +61,7 @@ db.<collection_name>.update(
   { $set: { key2: "new_value" } }
 )
 ```
+### Delete Document
+```bash
+db.<collection_name>.remove({ key1: "value1" })
+```
