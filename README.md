@@ -105,3 +105,120 @@ db.<collection_name>.aggregate([
 ])
 ```
 ### Lookup (Join) Another Collection
+```bash
+db.<collection_name>.aggregate([
+  { $lookup: {
+      from: "<other_collection>",
+      localField: "key1",
+      foreignField: "key2",
+      as: "joined_docs"
+  }}
+])
+```
+## Data Modeling
+### Schema Validation
+```bash
+db.createCollection('<collection_name>', {
+  validator: { $jsonSchema: {
+    bsonType: "object",
+    required: ["key1", "key2"],
+    properties: {
+      key1: {
+        bsonType: "string",
+        description: "must be a string"
+      },
+      key2: {
+        bsonType: "int",
+        minimum: 1,
+        maximum: 100,
+        description: "must be an integer in [1, 100]"
+      }
+    }
+  }}
+})
+```
+## Geospatial Queries
+### Create Geospatial Index
+```bash
+db.<collection_name>.createIndex({ location: "2dsphere" })
+```
+### Find Documents Near a Point
+```bash
+db.<collection_name>.find({
+  location: {
+    $near: {
+      $geometry: {
+        type: "Point",
+        coordinates: [ <longitude>, <latitude> ]
+      },
+      $maxDistance: 1000  # distance in meters
+    }
+  }
+})
+```
+## Backup and Restore
+### Backup Database
+```bash
+mongodump --db <database_name> --out /path/to/backup
+```
+### Restore Database
+```bash
+mongorestore /path/to/backup/<database_name>
+```
+## User Management
+### Create User
+```bash
+db.createUser({
+  user: "<username>",
+  pwd: "<password>",
+  roles: [{ role: "readWrite", db: "<database_name>" }]
+})
+```
+### Show Users
+```bash
+show users
+```
+### Drop User
+```bash
+db.dropUser("<username>")
+```
+## Replication
+### Initiate Replica Set
+```bash
+rs.initiate()
+```
+### Add a New Member
+```bash
+rs.add("<host>:<port>")
+```
+### View Replica Set Status
+```bash
+rs.status()
+```
+## Sharding
+### Enable Sharding on Database
+```bash
+sh.enableSharding("<database_name>")
+```
+### Shard a Collection
+```bash
+sh.shardCollection("<database_name>.<collection_name>", { "shard_key": 1 })
+```
+## Advanced Topics
+### Explain Query Performance
+```bash
+db.<collection_name>.find({ key1: "value1" }).explain("executionStats")
+```
+### Create a Text Index for Full-Text Search
+```bash
+db.<collection_name>.createIndex({ key1: "text" })
+```
+### Search Text Index
+```bash
+db.<collection_name>.find({ $text: { $search: "search_term" } })
+```
+## References
+For more information on MongoDB commands, visit the official documentation at MongoDB Documentation.
+```vbnet
+This `README.md` covers a wide range of MongoDB shell commands, from basic operations to advanced topics like the Aggregation Framework, replication, and sharding. Let me know if you'd like to add or modify anything!
+```
