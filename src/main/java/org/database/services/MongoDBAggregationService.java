@@ -23,35 +23,40 @@ public class MongoDBAggregationService {
             MongoDatabase database = mongoClient.getDatabase(DATABASE_NAME);
             MongoCollection<Document> collection = database.getCollection(COLLECTION_NAME);
 
-            // Aggregation Pipeline
-            collection.aggregate(Arrays.asList(
-                    Aggregates.match(Filters.eq("gender", "female")), // Match female persons
-                    Aggregates.group("$location.state", Accumulators.sum("totalPersons", 1)) // Group by state and count
-            )).forEach(doc -> System.out.println(doc.toJson()));
-
-            // Perform the aggregation
-            List<Document> results = collection.aggregate(Arrays.asList(
-                    Aggregates.match(Filters.eq("gender", "female")), // Match female persons
-                    Aggregates.group("$location.state",
-                            Accumulators.push("people", "$$ROOT")) // Group by state and push documents into a list
-            )).into(new ArrayList<>());
-
-            // Functional programming approach to collect into a Map<String, List<Document>>
-            Map<String, List<Document>> stateToPeopleMap = results.stream()
-                    .collect(Collectors.toMap(
-                            doc -> doc.getString("_id"), // Use state as key
-                            doc -> (List<Document>) doc.get("people") // Use list of persons as value
-                    ));
-
-            // Print the results using functional style
-            stateToPeopleMap.forEach((state, people) -> {
-                System.out.println("State: " + state);
-                people.forEach(person ->
-                        System.out.println("  Person: " + person.toJson())
-                );
-            });
-
-
+            countNumberOfPersonsPerState(collection);
+            aggregatePeopleByState(collection);
         }
+    }
+
+    private static void countNumberOfPersonsPerState(MongoCollection<Document> collection) {
+        // Aggregation Pipeline
+        collection.aggregate(Arrays.asList(
+                Aggregates.match(Filters.eq("gender", "female")), // Match female persons
+                Aggregates.group("$location.state", Accumulators.sum("totalPersons", 1)) // Group by state and count
+        )).forEach(doc -> System.out.println(doc.toJson()));
+    }
+
+    private static void aggregatePeopleByState(MongoCollection<Document> collection) {
+        // Perform the aggregation
+        List<Document> results = collection.aggregate(Arrays.asList(
+                Aggregates.match(Filters.eq("gender", "female")), // Match female persons
+                Aggregates.group("$location.state",
+                        Accumulators.push("people", "$$ROOT")) // Group by state and push documents into a list
+        )).into(new ArrayList<>());
+
+        // Functional programming approach to collect into a Map<String, List<Document>>
+        Map<String, List<Document>> stateToPeopleMap = results.stream()
+                .collect(Collectors.toMap(
+                        doc -> doc.getString("_id"), // Use state as key
+                        doc -> (List<Document>) doc.get("people") // Use list of persons as value
+                ));
+
+        // Print the results using functional style
+        stateToPeopleMap.forEach((state, people) -> {
+            System.out.println("State: " + state);
+            people.forEach(person ->
+                    System.out.println("  Person: " + person.toJson())
+            );
+        });
     }
 }
