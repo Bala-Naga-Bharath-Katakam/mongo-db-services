@@ -8,32 +8,42 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Updates;
+import com.mongodb.reactivestreams.client.MongoClients;
+import com.mongodb.reactivestreams.client.MongoClient;
+import com.mongodb.reactivestreams.client.MongoCollection;
+import com.mongodb.reactivestreams.client.MongoDatabase;
+import org.bson.Document;
+import org.bson.conversions.Bson;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public class MongoDBReactiveService {
-
     private static final String DATABASE_NAME = "school";
     private static final String COLLECTION_NAME = "students";
 
     public static void main(String[] args) {
-        // Step 1: Connect to MongoDB
         MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017");
         MongoDatabase database = mongoClient.getDatabase(DATABASE_NAME);
         MongoCollection<Document> collection = database.getCollection(COLLECTION_NAME);
 
-        // Step 2: Perform CRUD operations
+        // Perform CRUD operations
         createStudent(collection)
                 .thenMany(readStudents(collection))
-                .thenMany(updateStudent(collection))
+                .then(updateStudent(collection))
                 .thenMany(readStudents(collection))
-                .thenMany(deleteStudent(collection))
+                .then(deleteStudent(collection))
                 .thenMany(readStudents(collection))
                 .doOnTerminate(mongoClient::close)
-                .subscribe(result -> System.out.println("Operation result: " + result),
+                .subscribe(
+                        result -> System.out.println("Operation result: " + result),
                         error -> System.err.println("Error: " + error),
-                        () -> System.out.println("CRUD operations complete."));
+                        () -> System.out.println("CRUD operations complete.")
+                );
     }
 
-    // CREATE operation
+    // Reactive CREATE operation
     private static Mono<Void> createStudent(MongoCollection<Document> collection) {
         Document student = new Document("name", "John Doe")
                 .append("age", 20)
@@ -43,31 +53,30 @@ public class MongoDBReactiveService {
                 ));
 
         return Mono.from(collection.insertOne(student))
-                .doOnSuccess(result -> System.out.println("Inserted student: " + student.toJson()))
-                .doOnError(error -> System.err.println("Insertion error: " + error))
+                .doOnSuccess(result -> System.out.println("Student inserted successfully: " + student.toJson()))
                 .then();
     }
 
-
-    // READ operation
+    // Reactive READ operation
     private static Flux<Document> readStudents(MongoCollection<Document> collection) {
         return Flux.from(collection.find())
-                .doOnNext(student -> System.out.println("Read student: " + student.toJson()));
+                .doOnNext(student -> System.out.println("Found student: " + student.toJson()));
     }
 
-    // UPDATE operation
+    // Reactive UPDATE operation
     private static Mono<Void> updateStudent(MongoCollection<Document> collection) {
-        Document update = new Document("$set", new Document("subjects.0.grade", "A+"));
-        return Mono.from(collection.updateOne(new Document("name", "John Doe"), update))
-                .doOnNext(result -> System.out.println("Updated count: " + result.getModifiedCount()))
+        Bson filter = Filters.eq("name", "John Doe");
+        Bson update = Updates.set("subjects.0.grade", "A+");  // Update Math grade to A+
+        return Mono.from(collection.updateOne(filter, update))
+                .doOnSuccess(result -> System.out.println("Student updated successfully."))
                 .then();
     }
 
-    // DELETE operation
+    // Reactive DELETE operation
     private static Mono<Void> deleteStudent(MongoCollection<Document> collection) {
-        return Mono.from(collection.deleteOne(new Document("name", "John Doe")))
-                .doOnNext(result -> System.out.println("Deleted count: " + result.getDeletedCount()))
+        Bson filter = Filters.eq("name", "John Doe");
+        return Mono.from(collection.deleteOne(filter))
+                .doOnSuccess(result -> System.out.println("Student deleted successfully."))
                 .then();
     }
 }
-
