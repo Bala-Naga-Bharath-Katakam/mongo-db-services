@@ -42,6 +42,8 @@ public class MongoDBCRUDExample {
         mongoClient.close();
     }
 
+
+
     // CREATE operation
     private static void createStudent(MongoCollection<Document> collection) {
         Document student = new Document("name", "John Doe")
