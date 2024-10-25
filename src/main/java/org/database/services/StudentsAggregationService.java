@@ -33,9 +33,37 @@ public class StudentsAggregationService {
 
             // command 6
             aggregateByBirthYearAndSortByDESC(collection);
+            // Command 13
+            averagePersonsAgePerBucket(collection);
 
 
         }
+    }
+
+    private static void averagePersonsAgePerBucket(MongoCollection<Document> collection) {
+        // Define the aggregation pipeline for $bucket
+        List<Document> bucketPipeline = Arrays.asList(
+                new Document("$bucket", new Document("groupBy", "$dob.age")
+                        .append("boundaries", Arrays.asList(18, 30, 40, 50, 60, 120))
+                        .append("output", new Document("numPersons", new Document("$sum", 1))
+                                .append("averageAge", new Document("$avg", "$dob.age"))))
+        );
+
+        // Execute the $bucket aggregation and print each document
+        System.out.println("Results for $bucket:");
+        collection.aggregate(bucketPipeline).forEach(doc -> System.out.println(doc.toJson()));
+
+        // Define the aggregation pipeline for $bucketAuto
+        List<Document> bucketAutoPipeline = Arrays.asList(
+                new Document("$bucketAuto", new Document("groupBy", "$dob.age")
+                        .append("buckets", 5)
+                        .append("output", new Document("numPersons", new Document("$sum", 1))
+                                .append("averageAge", new Document("$avg", "$dob.age"))))
+        );
+
+        // Execute the $bucketAuto aggregation and print each document
+        System.out.println("Results for $bucketAuto:");
+        collection.aggregate(bucketAutoPipeline).forEach(doc -> System.out.println(doc.toJson()));
     }
 
     private static void aggregateByBirthYearAndSortByDESC(MongoCollection<Document> collection) {
