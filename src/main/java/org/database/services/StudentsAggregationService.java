@@ -3,9 +3,7 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Aggregates;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.Accumulators;
+import com.mongodb.client.model.*;
 import org.bson.Document;
 
 import java.util.ArrayList;
@@ -35,9 +33,71 @@ public class StudentsAggregationService {
             aggregateByBirthYearAndSortByDESC(collection);
             // Command 13
             averagePersonsAgePerBucket(collection);
+            // Command 14
+            fetchTenRecordsSortByBirthData(collection);
+            // Command 15
+            performTransformationSentToTransformedCollection(collection);
 
 
         }
+    }
+
+    private static void performTransformationSentToTransformedCollection(MongoCollection<Document> collection) {
+        // Define the aggregation pipeline
+        var pipeline = Arrays.asList(
+                // First $project stage
+                Aggregates.project(Projections.fields(
+                        Projections.excludeId(),
+                        Projections.include("name", "email", "dob", "gender", "location"),
+                        Projections.computed("birthdate", new Document("$toDate", "$dob.date")),
+                        Projections.computed("age", "$dob.age"),
+                        Projections.computed("location", new Document("type", "Point").append("coordinates", Arrays.asList(
+                                new Document("$convert", new Document("input", "$location.coordinates.longitude").append("to", "double").append("onError", 0.0).append("onNull", 0.0)),
+                                new Document("$convert", new Document("input", "$location.coordinates.latitude").append("to", "double").append("onError", 0.0).append("onNull", 0.0))
+                        )))
+                )),
+                // Second $project stage to create fullName
+                Aggregates.project(Projections.fields(
+                        Projections.include("gender", "email", "location", "birthdate", "age"),
+                        Projections.computed("fullName", new Document("$concat", Arrays.asList(
+                                new Document("$toUpper", new Document("$substrCP", Arrays.asList("$name.first", 0, 1))),
+                                new Document("$substrCP", Arrays.asList("$name.first", 1, new Document("$subtract", Arrays.asList(new Document("$strLenCP", "$name.first"), 1)))),
+                                " ",
+                                new Document("$toUpper", new Document("$substrCP", Arrays.asList("$name.last", 0, 1))),
+                                new Document("$substrCP", Arrays.asList("$name.last", 1, new Document("$subtract", Arrays.asList(new Document("$strLenCP", "$name.last"), 1))))
+                        )))
+                )),
+                // Output to a new collection "transformedPersons"
+                Aggregates.out("transformedPersons")
+        );
+
+        // Execute the aggregation
+        collection.aggregate(pipeline).first(); // Execute without printing since we are outputting to a new collection
+
+        System.out.println("Transformation complete, results stored in 'transformedPersons'.");
+    }
+
+    private static void fetchTenRecordsSortByBirthData(MongoCollection<Document> collection) {
+        // Define the aggregation pipeline
+        var pipeline = Arrays.asList(
+                Aggregates.match(Filters.eq("gender", "male")),
+                Aggregates.project(Projections.fields(
+                        Projections.excludeId(),
+                        Projections.include("gender"),
+                        Projections.computed("name",
+                                new Document("$concat", Arrays.asList(
+                                        "$name.first", " ", "$name.last"))),
+                        Projections.computed("birthdate",
+                                new Document("$toDate", "$dob.date"))
+                )),
+                Aggregates.sort(Sorts.ascending("birthdate")),
+                Aggregates.skip(10),
+                Aggregates.limit(10)
+        );
+
+        // Execute the aggregation
+        collection.aggregate(pipeline)
+                .forEach(doc -> System.out.println(doc.toJson()));
     }
 
     private static void averagePersonsAgePerBucket(MongoCollection<Document> collection) {
