@@ -12,7 +12,7 @@ import org.bson.conversions.Bson;
 
 import java.util.Arrays;
 
-public class MongoDBCRUDExample {
+public class MongoDBCRUDService {
     private static final String DATABASE_NAME = "school";
     private static final String COLLECTION_NAME = "students";
 
