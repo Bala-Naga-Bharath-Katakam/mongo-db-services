@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class MongoDBAggregationService {
+public class StudentsAggregationService {
     private static final String DATABASE_NAME = "school"; // Change to your database name
     private static final String COLLECTION_NAME = "students"; // Change to your collection name
 
